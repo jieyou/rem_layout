@@ -5,11 +5,13 @@
 	<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0,user-scalable=no" />
 	<script>
 		;(function(psdWidth,defaultRootFontSize,maxRootFontSize){
-			// d,w,delay,on为了代码更短
+			// 为了代码更短
 			var d = document
+			var de = d.documentElement
 			var w = window
-			var delay = setTimeout
 			var on = 'addEventListener'
+			var gbcr = 'getBoundingClientRect'
+			var ps = 'pageshow'
 
 			var head = d.head || d.getElementsByTagName('HEAD')[0]
 			var style = d.createElement('STYLE') // 采用拼css的形式，而不是直接用document.documentElement.style.fontSize的形式的原因是，拼css可以通过加入!important获得最高优先级，http://jsbin.com/dopupudago/2/edit?html,js,output
@@ -23,28 +25,21 @@
 				+'-ms-'+textSizeAdjustCSS
 				+'-o-'+textSizeAdjustCSS
 				+textSizeAdjustCSS
-
-			var ua = navigator.userAgent
-			var isAndroid = /android/i.test(ua) // 是否是Android  todo：Windows Phone 8.1 GDR1 上的 IE11 也在ua中加入了“Android”字段，尚无设备来测试
-			var isChrome = /chrome/i.test(ua) // 是否是chrome
 			
+			var hasGbcr = gbcr in de
 			var lastRootFontSize = null // 上一次设置的html的font-size
 			function setRem(){
 				var rootFontSize = Math.min(
 					(
-						isAndroid? // 某些安卓设备在切换肖像模式和风景模式（即横竖屏）时返回的window.innerWidth不正确，所以使用window.screen.width。见图：“show/4.1_切换肖像模式和风景模式时innerWidth不正确.jpg”
-							(
-								(w.orientation%180?Math.max(w.screen.width,w.screen.height): // 经过测试，某些安卓设备的浏览器（如4.3上的原生浏览器）在风景模式下，window.screen.width的值依然是窄边的宽度。见图：“4.3_原生浏览器，在风景模式下，screen.width的值依然是窄边的宽度”
-								w.screen.width
-							)/(isChrome?1:devicePixelRatio)): // Android上的chrome返回的w.screen.width为CSS像素，而非物理像素。见图“show/4.1_Android上的chrome返回的w.screen.width为CSS像素”此时如果是物理像素，则为800
-							w.innerWidth // iOS和桌面设备的window.innerWidth一直是准确的，直接使用
+						hasGbcr?
+							de[gbcr]().width // document.documentElement.getBoundingClientRect() iOS4.0+ 安卓2.0+  https://developer.mozilla.org/zh-CN/docs/Web/API/Element.getBoundingClientRect
+							:w.innerWidth
 					)
 						/(psdWidth/defaultRootFontSize)
 					,maxRootFontSize // html的font-size最大不超过设定的最大值。它的作用是，当用户用非常宽的屏幕（pad、pc）访问页面时，不至于使得根元素的font-size超过这个值。见图“show/wide_max_rem.jpg”
 				)
-				// alert('iW_'+w.innerWidth+'  sw_'+w.screen.width+'  dpr_'+devicePixelRatio+'  or_'+w.orientation)
+				// alert('2 iW_'+w.innerWidth+'  sw_'+w.screen.width+'  dpr_'+devicePixelRatio+'  or_'+w.orientation+'  gbcrw_'+d.documentElement.getBoundingClientRect().width)
 				if(rootFontSize != lastRootFontSize){
-					// alert('iW_'+w.innerWidth+'  sw_'+w.screen.width+'  dpr_'+devicePixelRatio+'  or_'+w.orientation)
 					// return
 					style.innerHTML = 
 						'html{'
@@ -55,38 +50,38 @@
 				}
 			}
 
-			// 安卓在页面刚载入时w.screen.width不一定正确，特别是从一个未设置viewport meta的页面跳转过来时，需要多调整几次。见图：“show/2.3.6_从一个未设置viewport的页面跳转过来时，起初innerWidth和screen.width都是不对的.png”
-			var androidLoopTimes = 0
-			function androidLoop(){
-				setRem()
-				androidLoopTimes++
-				if(androidLoopTimes<5){
-					delay(androidLoop,400)
-				}
+			// 在一定延时内稀释setRem的调用
+			function trySetRem(){
+				clearTimeout(resizeEventThrottleTimer)
+				resizeEventThrottleTimer = setTimeout(setRem,500)
 			}
 
 			psdWidth = psdWidth || 320
 			defaultRootFontSize = defaultRootFontSize || 16
 			maxRootFontSize = maxRootFontSize || 32
 			head.appendChild(style)
-
-			if(isAndroid){
-				androidLoop()
+			
+			d[on]('DOMContentLoaded',setRem,false)
+			// 安卓在页面刚载入时w.screen.width不一定正确，特别是从一个未设置viewport meta的页面跳转过来时，需要多调整几次。见图：“show/2.3.6_从一个未设置viewport的页面跳转过来时，起初innerWidth和screen.width都是不对的.png”，于是在pageshow或onload事件触发时再设置一次
+			if('on'+ps in w){
+				w[on](ps,function(e){
+					if(e.persisted){
+						trySetRem()
+					}
+				},false)
 			}else{
-				setRem()
+				w[on]('load',trySetRem,false)
 			}
 
-			d[on]('DOMContentLoaded',setRem,false)
-			w[on]('load',setRem,false)
-			w[on]('resize',function(){
-				clearTimeout(resizeEventThrottleTimer)
-				resizeEventThrottleTimer = delay(setRem,500)
-			},false)
+			w[on]('resize',trySetRem,false)
+
+			setRem()
 		})(
 			320, // 设置设计稿基准宽度
 			16, // 设置默认根元素font-size 最好设置为16，因为浏览器默认的值就是16，这样代码失效或尚未起效时，不会有布局问题
 			32 // 设置最大根元素font-size 它的作用是，当用户用非常宽的屏幕（pad、pc）访问页面时，不至于使得根元素的font-size超过这个值
 		)
+		
 	</script>
 	<title>rem</title>
 	<style>
@@ -101,17 +96,19 @@
 		<!-- content text -->
 		<p style="
 		    font-size:1rem
+		    /*通过 font-size:16px; 除以16计算出来*/
 		">一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十</p>
 		
 		<!-- icon -->
 		<img src="up.png" alt="向上" style="position:fixed;
 		    bottom:0.625rem;right:0.625rem;width:3rem;height:3rem;
-		    /**/ /*对于不支持rem的浏览器*/
+		    /*通过 bottom:10px;right:10px;width:48px;height:48px; 各除以16计算出来*/
 		">
 
 		<!-- photo -->
 		<img src="p1.jpg" alt="向上" style="margin:0 auto;display:block;
 		    width:18.75rem;height:12.5rem;
+		    /*通过 width:300px;height:200px; 各除以16计算出来*/
 		">
 
 	</div>
