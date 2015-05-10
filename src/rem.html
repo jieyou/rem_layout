@@ -4,7 +4,7 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0,user-scalable=no" />
 	<script>
-		;(function(psdWidth,defaultRootFontSize,maxRootFontSize){
+		;(function(psdWidth,dividendFontSize,maxRootFontSize){
 			// 为了代码更短
 			var d = document
 			var de = d.documentElement
@@ -35,8 +35,8 @@
 							de[gbcr]().width // document.documentElement.getBoundingClientRect() iOS4.0+ 安卓2.0+  https://developer.mozilla.org/zh-CN/docs/Web/API/Element.getBoundingClientRect
 							:w.innerWidth
 					)
-						/(psdWidth/defaultRootFontSize)
-					,maxRootFontSize // html的font-size最大不超过设定的最大值。它的作用是，当用户用非常宽的屏幕（pad、pc）访问页面时，不至于使得根元素的font-size超过这个值。见图“show/wide_max_rem.jpg”
+						/(psdWidth/dividendFontSize)
+					,maxRootFontSize
 				)
 				// alert('2 iW_'+w.innerWidth+'  sw_'+w.screen.width+'  dpr_'+devicePixelRatio+'  or_'+w.orientation+'  gbcrw_'+d.documentElement.getBoundingClientRect().width)
 				if(rootFontSize != lastRootFontSize){
@@ -57,7 +57,7 @@
 			}
 
 			psdWidth = psdWidth || 320
-			defaultRootFontSize = defaultRootFontSize || 16
+			dividendFontSize = dividendFontSize || 16
 			maxRootFontSize = maxRootFontSize || 32
 			head.appendChild(style)
 			
@@ -78,10 +78,9 @@
 			setRem()
 		})(
 			320, // 设置设计稿基准宽度
-			16, // 设置默认根元素font-size 最好设置为16，因为浏览器默认的值就是16，这样代码失效或尚未起效时，不会有布局问题
-			32 // 设置最大根元素font-size 它的作用是，当用户用非常宽的屏幕（pad、pc）访问页面时，不至于使得根元素的font-size超过这个值
+			16, // 设置开发时的被除数（见HOW TO USE第4步） 在设计稿基准宽度为320时最好设置为16（在在设计稿基准宽度为其他值时等比放大，如640时设置为32等）。因为浏览器默认的值就是16，这样代码失效或尚未起效时，不会有布局问题
+			32 // 设置最大根元素font-size，请注意这是一个css像素值，而非物理像素值。它的作用是，当用户用非常宽的屏幕（pad、pc）访问页面时，不至于使得根元素的font-size超过这个值，使得布局非常难看。见图“show/wide_max_rem.jpg”
 		)
-		
 	</script>
 	<title>rem</title>
 	<style>

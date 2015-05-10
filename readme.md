@@ -35,13 +35,13 @@
 ## HOW TO USE
 
 1. 设置移动端网页专用的viewport meta，至少需要包含 `width=device-width,initial-scale=1.0` ，如 `<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0,user-scalable=no" />` 
-2. 在 `head` 内，上述meta标签和指定charset的meta标签之后，任何外链的css或js文件之前，新建一个 `script` 标签，将 `build/rem.js` 粘贴进去。
-3. 设定参数，设定代码中最后3行的三个参数（通常情况下你不需要更改它们）。请注意参数的单位都是[css像素（参照像素），而非实际的物理像素](blog.youyo.name/archives/mobile-device-screen-pixel-density.html)
-4. 开始你的开发，按照设计图开发样式，但是长度单位需要通过除以html元素的font-size来换算。如：一个按钮的高度是20px（css像素），参数设定的html的font-size为16，则它的样式需要写成 `height:1.25rem` 
+2. 在 `head` 内，上述meta标签和指定charset的meta标签之后，任何外链的css或js文件之前，新建一个 `script` 标签，将 `build/rem.js` 粘贴进去（未压缩源码在`src/rem.html`内）。
+3. 设定参数，设定代码中最后3行的三个参数（通常情况下你不需要更改它们）。请注意最后一个参数的单位是[css像素（参照像素），而非实际的物理像素](blog.youyo.name/archives/mobile-device-screen-pixel-density.html)
+4. 开始你的开发，按照设计图开发样式，但是长度单位需要通过除以`你在第3步里面设置的第二个参数“开发时的被除数”（dividendFontSize）`来换算。如：一个按钮的高度是20px（css像素），而你设定的`dividendFontSize`为16，则它的样式需要写成 `height:1.25rem` （20/16=1.25） 
 
 ## IE8 AND BELOW
 
-有的时候我们需要考虑使用rem布局的页面在IE8级以下版本的浏览器中被打开时，不至于报错，于是可以采用以下hack方法，具体可以参考`src/ie8.html`。当然，你还需要为所有使用rem为单位的样式，另写一份为px为单位的。
+有的时候我们需要考虑使用rem布局的页面在IE8级以下版本的浏览器中被打开时，不至于报错，于是可以采用以下hack方法，具体可以参考`src/ie8.html`。当然，你还需要为所有使用rem为单位的样式，另写（或生成、编译出）一份px为单位的。
 
 	// 在上面“HOW TO USE”中第2、3步粘贴代码的同一位置，改为：
 	<script>
